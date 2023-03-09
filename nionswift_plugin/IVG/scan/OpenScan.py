@@ -33,41 +33,35 @@ class ScanEngine:
         self.sock.connect(("192.168.1.10", 7))
         self.x_sampling = 128
         self.y_sampling = 128
+        self.pixel_ratio = 20
+        self.is_scanning = False
         self.current_frame = b''
-        self.data_array = numpy.zeros(self.x_sampling * self.y_sampling, dtype='uint32')
-        print('OK')
+        self.data_array = numpy.zeros(self.x_sampling * self.y_sampling, dtype='uint16')
 
     def set_scan_dma(self):
+        self.is_scanning = True
         data = [0, 3, 0, 0, 0, 0]
         self.sock.sendall(bytearray(data))
-        return self.sock.recv(4)
+        result = int.from_bytes(self.sock.recv(4), 'little')
+        assert result == 10
+        return result
 
     def finish_scan_dma(self):
+        self.is_scanning = False
         data = [0, 4, 0, 0, 0, 0]
         self.sock.sendall(bytearray(data))
-        return self.sock.recv(4)
+        value = self.sock.recv(4)
+        result = int.from_bytes(value, 'little')
+        return result
 
     def query_bd_count(self):
         data = [0, 5, 0, 0, 0, 0]
         self.sock.sendall(bytearray(data))
-        return self.sock.recv(4)
-
-    def receive_frame(self):
-        data = [0, 6, 0, 0, 0, 0]
-        self.sock.sendall(bytearray(data))
-        size = 0
-        frame = b''
-        #frame = self.sock.recv(self.x_sampling * self.y_sampling * 4)
-        while size != self.x_sampling * self.y_sampling * 4:
-            temp = self.sock.recv(self.x_sampling * self.y_sampling * 4 - size)
-            size = size + len(temp)
-            frame = frame + temp
-        temp_data = numpy.frombuffer(frame, dtype='uint32')
-        self.data_array = temp_data
-        return None
+        val = int.from_bytes(self.sock.recv(4), 'little')
+        return val
 
     def receive_partial_frame(self, memory_offset, size):
-        data = [0, 7, memory_offset >> 8, memory_offset % 256, size >> 8, size % 256]
+        data = [0, 7, size % 256, size >> 8, memory_offset % 256, memory_offset >> 8]
         self.sock.sendall(bytearray(data))
         frame_size = 0
         frame = b''
@@ -75,32 +69,31 @@ class ScanEngine:
             temp = self.sock.recv(size - frame_size)
             frame_size = frame_size + len(temp)
             frame = frame + temp
-        temp_data = numpy.frombuffer(frame, dtype='uint32')
-        self.data_array[memory_offset >> 2 : (memory_offset >> 2) + (size >> 2)] = temp_data
+        temp_data = numpy.frombuffer(frame, dtype='uint16')
+        if self.is_scanning:
+            self.data_array[(memory_offset * 256) >> 1 : ((memory_offset * 256) >> 1) + (size >> 1)] = temp_data
         return None
 
-    def listen_from_tcp(self):
-        print(self.x_sampling)
-        print(self.y_sampling)
-        try:
-            a = self.sock.recv(self.x_sampling * self.y_sampling * 4)
-            temp_data = numpy.frombuffer(a, dtype='uint32')
-            print(temp_data)
-            print(len(temp_data))
-            #self.data_array = temp_data
-        except:
-            print('not more images')
-
-        #
+    def receive_total_frame(self):
+        total_size = self.x_sampling * self.y_sampling * 2
+        if total_size > 32768:
+            bytes_sent = 0
+            while bytes_sent != total_size:
+                next_bytes_size = min(total_size - bytes_sent, 32768)
+                self.receive_partial_frame(int(bytes_sent / 256), next_bytes_size)
+                bytes_sent = bytes_sent + next_bytes_size
+        else:
+            self.receive_partial_frame(0, total_size)
         return None
+
 
     def set_scan_register(self, address, value):
-        data = [0, 1, address >> 8, address % 256, value >> 8, value % 256]
+        data = [0, 1, value % 256, value >> 8, address % 256, address >> 8]
         self.sock.sendall(bytearray(data))
         return self.sock.recv(4)
 
     def set_video_register(self, address, value):
-        data = [0, 2, address >> 8, address % 256, value >> 8, value % 256]
+        data = [0, 2, value % 256, value >> 8, address % 256, address >> 8]
         self.sock.sendall(bytearray(data))
         return self.sock.recv(4)
 
@@ -112,8 +105,9 @@ class ScanEngine:
         self.y_sampling = y
         self.set_scan_register(2, x)
         self.set_scan_register(3, y)
+        self.set_scan_register(5, int(512 * 512 / (4 * x * y)))
         self.reset()
-        self.data_array = numpy.zeros(self.x_sampling * self.y_sampling, dtype='uint32')
+        self.data_array = numpy.zeros(self.x_sampling * self.y_sampling, dtype='uint16')
 
     def reset(self):
         self.set_scan_register(4, 1)
@@ -121,46 +115,12 @@ class ScanEngine:
 
     def set_pixel_time(self, pixel_time_us):
         nb_clock_ticks = int(pixel_time_us * 1000.0 / CLOCK_TICK)
+        self.pixel_ratio = nb_clock_ticks
         self.set_scan_register(0, nb_clock_ticks)
         self.reset()
 
-    def set_array_data():
-        return numpy.zeros(self.x_sampling * self.y_sampling, dtype='uint32')
-
     def data_array_reshaped(self):
         return self.data_array.reshape((self.x_sampling, self.y_sampling))
-
-    def read_full_memory(self):
-        for x in range(8):
-            self.get_data_part_v2(8192 * x, 8192)
-
-    def read_full_frame(self):
-        max_columns = self.x_sampling * 4
-        max_lines = self.y_sampling
-        for x in range(max_lines):
-            self.get_data_part_v2(512 * x, max_columns)
-
-    def get_data_part_v2(self, memory_offset, size):
-        data = [0, 0, memory_offset >> 8, memory_offset % 256, size >> 8, size % 256]
-        self.sock.sendall(bytearray(data))
-        line = memory_offset >> 9
-        read_size = 0
-        while read_size != int(size / 4):
-            a = self.sock.recv(PACKET_LEN)
-            temp_data = numpy.frombuffer(a, dtype='uint32')
-            self.data_array[read_size + line * self.y_sampling: len(temp_data) + read_size + line * self.y_sampling] = temp_data
-            read_size = read_size + len(temp_data)
-
-    def get_data_part(self, memory_offset, size):
-        data = [0, 0, memory_offset >> 8, memory_offset % 256, size >> 8, size % 256]
-        self.sock.sendall(bytearray(data))
-        read_size = 0
-        while read_size != int(size / 4):
-            a = self.sock.recv(PACKET_LEN)
-            temp_data = numpy.frombuffer(a, dtype='uint32')
-            self.data_array[
-            read_size + int(memory_offset / 4): len(temp_data) + read_size + int(memory_offset / 4)] = temp_data
-            read_size = read_size + len(temp_data)
 
 class Channel:
     def __init__(self, channel_id: int, name: str, enabled: bool):
@@ -215,6 +175,7 @@ class Device:
         """Stop acquiring."""
         if self.__is_scanning:
             self.__is_scanning = False
+            self.scan_engine.finish_scan_dma()
 
     def set_idle_position_by_percentage(self, x: float, y: float) -> None:
         """Set the idle position as a percentage of the last used frame parameters."""
@@ -224,6 +185,7 @@ class Device:
         """Cancel acquisition (immediate)."""
         if self.__is_scanning:
             self.__is_scanning = False
+            self.scan_engine.finish_scan_dma()
 
     def __get_channels(self) -> typing.List[Channel]:
         channels = [Channel(0, "ADF", True), Channel(1, "BF", False)]
@@ -250,8 +212,6 @@ class Device:
         """Called just before and during acquisition.
         Device should use these parameters for new acquisition; and update to these parameters during acquisition.
         """
-        print(frame_parameters)
-        print(frame_parameters.as_dict())
         (x, y) = frame_parameters.as_dict()['size']
         pixel_time = frame_parameters.as_dict()['pixel_time_us']
         self.scan_engine.set_sampling(x, y)
@@ -267,6 +227,7 @@ class Device:
             self.__buffer = list()
             self.scan_engine.set_scan_dma()
             self.__start_next_frame()
+            self.__is_scanning = True
         return self.__frame_number
 
     def __start_next_frame(self):
@@ -306,11 +267,15 @@ class Device:
         for channel in current_frame.channels:
             data_element = dict()
 
-            self.scan_engine.query_bd_count()
+            result = self.scan_engine.query_bd_count()
+            while result == -1 or result >= 4294967295:
+                result = self.scan_engine.query_bd_count()
             #self.scan_engine.receive_frame()
-            total_size = self.scan_engine.x_sampling * self.scan_engine.y_sampling * 4
-            frame_size = min(total_size, 32768)
-            self.scan_engine.receive_partial_frame(0, frame_size)
+            #total_size = self.scan_engine.x_sampling * self.scan_engine.y_sampling * 4
+            #frame_size = min(total_size, 32768)
+            #self.scan_engine.receive_partial_frame(0, frame_size)
+            self.scan_engine.receive_total_frame()
+
             data_array = self.scan_engine.data_array_reshaped()
             data_element["data"] = data_array
             properties = current_frame.frame_parameters.as_dict()

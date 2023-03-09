@@ -11,7 +11,7 @@ class Handler:
         self.__dsp_filter = 0
 
     def set_video_register(self, address, value):
-        data = [0, 2, address >> 8, address % 256, value >> 8, value % 256]
+        data = [0, 2, value % 256, value >> 8, address % 256, address >> 8]
         self.sock.sendall(bytearray(data))
         return self.sock.recv(4)
 
