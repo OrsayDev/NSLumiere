@@ -121,19 +121,19 @@ class orsayScan(object):
             # if not copy default configuration
             programdata = os.getenv("ProgramData")
             microscope_path = os.path.join(os.getenv("ProgramData"), "Microscope")
+            ### From Yves ###
+            """
             if not os.path.exists(microscope_path):
                 os.makedirs(microscope_path)
             scan_path = os.path.join(microscope_path, "Scan")
             if not os.path.exists:
-                print('here1')
                 os.makedirs(scan_path)
             if not os.path.exists(os.path.join(scan_path, "scan.xml")):
-                print('here2')
                 copy2("scan.xml", scan_path)
             if not os.path.exists(os.path.join(scan_path, "Simulation.xml")):
-                print('here3')
                 copy2("Simulation.xml", scan_path)
             self.__libname = os.path.join(os.path.dirname(__file__), "Scan.dll")
+            """
             ### From Yves ###
             self.__libname = os.path.join(os.path.dirname(__file__), "../../aux_files/DLLs/Scan.dll")
             print(self.__libname)
