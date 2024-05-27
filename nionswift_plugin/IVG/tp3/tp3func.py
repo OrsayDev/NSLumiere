@@ -406,7 +406,7 @@ class TimePix3():
             value = min(exposure_time, 0.250) #Maximum value is 250 ms
             detector_config["TriggerMode"] = "AUTOTRIGSTART_TIMERSTOP"
             detector_config["PeriphClk80"] = True
-            detector_config["TriggerPeriod"] = value+0.001  # 1s
+            detector_config["TriggerPeriod"] = value+self.getReadoutTime()  # 1s
             detector_config["ExposureTime"] = value  # 1s
         else:
             value = 0.1
