@@ -13,6 +13,7 @@ setup(
     python_requires='>=3.8.5',
     data_files=[('Lib/site-packages/nionswift_plugin/aux_files/config', [
         'nionswift_plugin/aux_files/config/global_settings.json',
+        'nionswift_plugin/aux_files/config/camera_settings.json',
         'nionswift_plugin/aux_files/config/diafs_settings.json',
         'nionswift_plugin/aux_files/config/eels_settings.json',
         'nionswift_plugin/aux_files/config/lenses_settings.json',

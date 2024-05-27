@@ -1,0 +1,15 @@
+{
+    "Timepix3": {
+        "PIXELS_X": 1025,
+        "PIXELS_Y": 256,
+        "SPEC_SIZE_ISI": 1225,
+        "SAVE_PATH": "file:/data",
+        "SAVE_PATH_TIFF": "file:/data",
+        "PIXEL_MASK_PATH": "/home/asi/load_files/bpcs/",
+        "PIXEL_THRESHOLD_PATH": "/home/asi/load_files/dacs/",
+        "PIXEL_MASK_FILES": "['eq-accos-03_00.bpc', 'eq-accos-03_01.bpc', 'eq-accos-03_02.bpc', 'eq-accos-03_03.bpc', 'eq-accos-03_04.bpc', 'eq-accos-03_05.bpc', 'eq-accos-03_06.bpc', 'eq-accos-03_07.bpc']",
+        "PIXEL_THRESHOLD_FILES": "['eq-accos-03_00.dacs', 'eq-accos-03_01.dacs', 'eq-accos-03_02.dacs', 'eq-accos-03_03.dacs', 'eq-accos-03_04.dacs', 'eq-accos-03_05.dacs', 'eq-accos-03_06.dacs', 'eq-accos-03_07.dacs']",
+        "BUFFER_SIZE": 64000,
+        "NUMBER_OF_MASKS": 4
+    }
+}

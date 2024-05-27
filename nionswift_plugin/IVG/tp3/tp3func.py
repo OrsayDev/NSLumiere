@@ -9,26 +9,18 @@ from ...aux_files import read_data
 def SENDMYMESSAGEFUNC(sendmessagefunc):
     return sendmessagefunc
 
-SPIM_SIZE = 1025
-RAW4D_PIXELS_X = 256
-RAW4D_PIXELS_Y = 256
-SPEC_SIZE = 1025
-SPEC_SIZE_ISI = 1025 + 200
-SPEC_SIZE_Y = 256
-
-BIAS_VOLTAGE = 140
-SAVE_PATH = "file:/media/asi/Data21/TP3_Data"
-SAVE_PATH_TIFF = "file:/data"
-PIXEL_MASK_PATH = '/home/asi/load_files/bpcs/'
-PIXEL_THRESHOLD_PATH = '/home/asi/load_files/dacs/'
-PIXEL_MASK_FILES = ['eq-accos-03_00.bpc', 'eq-accos-03_01.bpc', 'eq-accos-03_02.bpc',
-                    'eq-accos-03_03.bpc', 'eq-accos-03_04.bpc', 'eq-accos-03_05.bpc',
-                    'eq-accos-03_06.bpc', 'eq-accos-03_07.bpc']
-PIXEL_THRESHOLD_FILES = ['eq-accos-03_00.dacs', 'eq-accos-03_01.dacs', 'eq-accos-03_02.dacs',
-                         'eq-accos-03_03.dacs', 'eq-accos-03_04.dacs', 'eq-accos-03_05.dacs',
-                         'eq-accos-03_06.dacs', 'eq-accos-03_07.dacs']
-BUFFER_SIZE = 64000
-NUMBER_OF_MASKS = 4
+set_file = read_data.FileManager('camera_settings')
+PIXELS_X = set_file.settings["Timepix3"]["PIXELS_X"]
+PIXELS_Y = set_file.settings["Timepix3"]["PIXELS_Y"]
+SPEC_SIZE_ISI = set_file.settings["Timepix3"]["SPEC_SIZE_ISI"]
+SAVE_PATH = set_file.settings["Timepix3"]["SAVE_PATH"]
+SAVE_PATH_TIFF = set_file.settings["Timepix3"]["SAVE_PATH_TIFF"]
+PIXEL_MASK_PATH = set_file.settings["Timepix3"]["PIXEL_MASK_PATH"]
+PIXEL_MASK_FILES = set_file.settings["Timepix3"]["PIXEL_MASK_FILES"]
+PIXEL_THRESHOLD_FILES = set_file.settings["Timepix3"]["PIXEL_THRESHOLD_FILES"]
+PIXEL_THRESHOLD_PATH = set_file.settings["Timepix3"]["PIXEL_THRESHOLD_PATH"]
+BUFFER_SIZE = set_file.settings["Timepix3"]["BUFFER_SIZE"]
+NUMBER_OF_MASKS = set_file.settings["Timepix3"]["NUMBER_OF_MASKS"]
 
 #Modes that we receive a frame
 FRAME = 0
@@ -108,22 +100,22 @@ class Timepix3Configurations:
 
     def get_array_shape(self):
         if self.mode == FASTCHRONO:
-            return self.xspim_size, SPEC_SIZE
+            return self.xspim_size, PIXELS_X
         elif self.mode == COINC_CHRONO:
-            return self.time_width * 2, SPEC_SIZE
+            return self.time_width * 2, PIXELS_X
         elif self.mode == FRAME or self.mode == FRAME_BASED or self.mode == ISIBOX_SAVEALL:
             if self.bin:
-                return SPEC_SIZE
+                return PIXELS_X
             else:
-                return SPEC_SIZE_Y, SPEC_SIZE
+                return PIXELS_Y, PIXELS_X
         elif self.mode == FRAME_4DMASKED:
             return self.yspim_size, self.xspim_size, NUMBER_OF_MASKS
         elif self.mode == EVENT_HYPERSPEC or self.mode == EVENT_HYPERSPEC_COINC or self.mode == EVENT_LIST_SCAN:
-            return self.yspim_size, self.xspim_size, SPIM_SIZE
+            return self.yspim_size, self.xspim_size, PIXELS_X
         elif self.mode == HYPERSPEC_FRAME_BASED: #Frame based measurement
-            return self.yscan_size, self.xscan_size, SPEC_SIZE
+            return self.yscan_size, self.xscan_size, PIXELS_X
         elif self.mode == EVENT_4DRAW:
-            return self.yspim_size, self.xspim_size, RAW4D_PIXELS_Y, RAW4D_PIXELS_X
+            return self.yspim_size, self.xspim_size, PIXELS_Y, PIXELS_X
         else:
             raise TypeError(f"***TP3_CONFIG***: Attempted mode ({self.mode}) that is not configured in spimimage.")
 
@@ -173,14 +165,14 @@ class Timepix3DataManager:
                         self.data[start_index + 1] = (2 * self.data[start_index + 2] + self.data[start_index - 1]) / 3.0
                 else:
                     for start_index in [255, 511, 767]:
-                        self.data[start_index::SPEC_SIZE] = (2 * self.data[start_index - 1::SPEC_SIZE] + self.data[start_index + 2::SPEC_SIZE]) / 3.0
-                        self.data[start_index + 1::SPEC_SIZE] = (2 * self.data[start_index + 2::SPEC_SIZE] + self.data[start_index - 1::SPEC_SIZE]) / 3.0
+                        self.data[start_index::PIXELS_X] = (2 * self.data[start_index - 1::PIXELS_X] + self.data[start_index + 2::PIXELS_X]) / 3.0
+                        self.data[start_index + 1::PIXELS_X] = (2 * self.data[start_index + 2::PIXELS_X] + self.data[start_index - 1::PIXELS_X]) / 3.0
             elif config.mode == COINC_CHRONO:
                 for start_index in [255, 511, 767]:
-                    self.data[start_index::SPEC_SIZE] = (2 * self.data[start_index - 1::SPEC_SIZE] + self.data[
-                                                                                                     start_index + 2::SPEC_SIZE]) / 3.0
-                    self.data[start_index + 1::SPEC_SIZE] = (2 * self.data[start_index + 2::SPEC_SIZE] + self.data[
-                                                                                                         start_index - 1::SPEC_SIZE]) / 3.0
+                    self.data[start_index::PIXELS_X] = (2 * self.data[start_index - 1::PIXELS_X] + self.data[
+                                                                                                     start_index + 2::PIXELS_X]) / 3.0
+                    self.data[start_index + 1::PIXELS_X] = (2 * self.data[start_index + 2::PIXELS_X] + self.data[
+                                                                                                         start_index - 1::PIXELS_X]) / 3.0
             else:
                 logging.info("***TPX3***: No gap correction has been set for this mode.")
 
@@ -426,7 +418,7 @@ class TimePix3():
         logging.info(f'Response of updating Detector Configuration (exposure time to {value}): ' + data)
 
     def acq_init(self, ntrig=9999999):
-        self.__detector_config.bias_voltage = BIAS_VOLTAGE
+        self.__detector_config.bias_voltage = 140
         """
         Initialization of detector. Standard value is 99999 triggers in continuous mode (a single trigger).
         """
@@ -436,7 +428,7 @@ class TimePix3():
         detector_config["TriggerOut"] = 2
         #detector_config["TriggerMode"] = "AUTOTRIGSTART_TIMERSTOP"
         detector_config["BiasEnabled"] = True
-        detector_config["BiasVoltage"] = BIAS_VOLTAGE
+        detector_config["BiasVoltage"] = 140
         detector_config["Fan1PWM"] = 100 #100V
         detector_config["Fan2PWM"] = 100 #100V
         detector_config["TriggerPeriod"] = 1.0  # 1s
@@ -1178,6 +1170,20 @@ class TimePix3():
 
                         data_size = int(cam_properties['dataSize'])
 
+                        #Confirming that the array size is coherent
+                        shape = self.__detector_config.get_array_shape()
+                        size = self.__detector_config.get_array_size()
+                        if size == 2:
+                            assert int(cam_properties['width']) == shape[1], \
+                                 "***TPX3***: The width of the detector is not what is expected. Check the JSON file."
+                            assert int(cam_properties['height']) == shape[0], \
+                                "***TPX3***: The height of the detector is not what is expected. Check the JSON file."
+                        elif size == 1:
+                            assert int(cam_properties['width']) == shape[0], \
+                                "***TPX3***: The width of the detector is not what is expected. Check the JSON file."
+                            assert int(cam_properties['height']) == 1, \
+                                "***TPX3***: The height of the detector is not what is expected. Check the JSON file."
+
                         assert (begin_header == 0)
                         how_many_more_bytes = data_size + len(header) - len(packet_data) + 1
                         while how_many_more_bytes != 0:
@@ -1193,14 +1199,14 @@ class TimePix3():
                             self.__frame = cam_properties['frameNumber']
                             check_data_and_send_message(cam_properties, frame_data)
                         if message == 2:
-                            start_channel = int(cam_properties['frameNumber']) * SPEC_SIZE #Spatial pixel * number of energy channels
+                            start_channel = int(cam_properties['frameNumber']) * PIXELS_X #Spatial pixel * number of energy channels
                             number_of_channels = int((data_size * 8 / int(cam_properties['bitDepth'])))
-                            extra_pixels = int(number_of_channels / SPEC_SIZE)
+                            extra_pixels = int(number_of_channels / PIXELS_X)
                             self.__data[start_channel:start_channel + number_of_channels] = event_list[:]
                             #print(f'***TP3***: Acquiring hyperspecimage. Header is {header}. Start and number of channels is {start_channel} and {number_of_channels}. Number of pixels per call is {extra_pixels}.')
                             self.__frame = min(cam_properties['frameNumber'] + extra_pixels, self.__detector_config.xscan_size * self.__detector_config.yscan_size)
                             self.sendmessage(2)
-                            if start_channel + number_of_channels >= self.__detector_config.xscan_size * self.__detector_config.yscan_size * SPEC_SIZE:
+                            if start_channel + number_of_channels >= self.__detector_config.xscan_size * self.__detector_config.yscan_size * PIXELS_X:
                                 self.stopTimepix3Measurement()
                                 logging.info("***TP3***: Spim is over. Closing connection.")
                                 return
@@ -1385,7 +1391,7 @@ class TimePix3():
         return self.__frame
 
     def create_spimimage_frame(self):
-        return self.__data.reshape((self.__detector_config.yscan_size, self.__detector_config.xscan_size, SPEC_SIZE))
+        return self.__data.reshape((self.__detector_config.yscan_size, self.__detector_config.xscan_size, PIXELS_X))
 
     def create_4dimage(self):
         return self.__data_manager.create_reshaped_array(self.__detector_config)

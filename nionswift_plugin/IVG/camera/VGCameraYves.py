@@ -992,4 +992,4 @@ def run():
                                             {"camera_module"})
             set_file.save_locally()
         except Exception as e:
-            logging.info(f"Failed to start camera: {manufacturer}.  model: {model}. Exception: {e}")
+            logging.info(f"***CAMERA***: Failed to start camera: {manufacturer}.  model: {model}. Exception: {repr(e)}")
