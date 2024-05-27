@@ -405,10 +405,12 @@ class TimePix3():
         if self.__frame_based: #This is frame-based mode
             value = min(exposure_time, 0.250) #Maximum value is 250 ms
             detector_config["TriggerMode"] = "AUTOTRIGSTART_TIMERSTOP"
-            detector_config["TriggerPeriod"] = value+0.002  # 1s
+            detector_config["PeriphClk80"] = True
+            detector_config["TriggerPeriod"] = value+0.001  # 1s
             detector_config["ExposureTime"] = value  # 1s
         else:
             value = 0.1
+            detector_config["PeriphClk80"] = False
             detector_config["TriggerMode"] = "CONTINUOUS"
             detector_config["TriggerPeriod"] = 0.1  # 1s
             detector_config["ExposureTime"] = 0.1  # 1s
@@ -848,7 +850,7 @@ class TimePix3():
         self.set_threshold()
 
     def getReadoutTime(self):
-        return 0.002
+        return 0.001
 
     def getNumofPorts(self):
         pass
