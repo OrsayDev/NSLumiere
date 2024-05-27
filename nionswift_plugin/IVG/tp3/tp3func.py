@@ -16,8 +16,8 @@ SPEC_SIZE_ISI = set_file.settings["Timepix3"]["SPEC_SIZE_ISI"]
 SAVE_PATH = set_file.settings["Timepix3"]["SAVE_PATH"]
 SAVE_PATH_TIFF = set_file.settings["Timepix3"]["SAVE_PATH_TIFF"]
 PIXEL_MASK_PATH = set_file.settings["Timepix3"]["PIXEL_MASK_PATH"]
-PIXEL_MASK_FILES = set_file.settings["Timepix3"]["PIXEL_MASK_FILES"]
-PIXEL_THRESHOLD_FILES = set_file.settings["Timepix3"]["PIXEL_THRESHOLD_FILES"]
+PIXEL_MASK_FILES = (set_file.settings["Timepix3"]["PIXEL_MASK_FILES"]).split()
+PIXEL_THRESHOLD_FILES = (set_file.settings["Timepix3"]["PIXEL_THRESHOLD_FILES"]).split()
 PIXEL_THRESHOLD_PATH = set_file.settings["Timepix3"]["PIXEL_THRESHOLD_PATH"]
 BUFFER_SIZE = set_file.settings["Timepix3"]["BUFFER_SIZE"]
 NUMBER_OF_MASKS = set_file.settings["Timepix3"]["NUMBER_OF_MASKS"]
@@ -850,7 +850,7 @@ class TimePix3():
         self.set_threshold()
 
     def getReadoutTime(self):
-        return 0.001
+        return 0.0015
 
     def getNumofPorts(self):
         pass
