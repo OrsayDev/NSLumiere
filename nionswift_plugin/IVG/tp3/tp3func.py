@@ -1199,6 +1199,7 @@ class TimePix3():
                         if message == 1 or message == 3:
                             self.__data[:] = event_list[:]
                             self.__frame = cam_properties['frameNumber']
+                            self.__data_manager.correct_data_or_not(self.__gapsMode, self.__detector_config)
                             check_data_and_send_message(cam_properties, frame_data)
                         if message == 2:
                             start_channel = int(cam_properties['frameNumber']) * PIXELS_X #Spatial pixel * number of energy channels
@@ -1383,7 +1384,6 @@ class TimePix3():
         return cur_pa
 
     def create_specimage(self):
-        self.__data_manager.correct_data_or_not(self.__gapsMode, self.__detector_config)
         return self.__data_manager.create_reshaped_array(self.__detector_config)
 
     def create_spimimage(self):
