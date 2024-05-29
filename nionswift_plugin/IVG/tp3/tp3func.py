@@ -239,13 +239,13 @@ class TimePix3():
             logging.info('***TP3***: Timepix3 in simulation mode.')
 
     def get_controller(self):
-        # #TODO: In chromaTEM, even with open scan this control will fail
-        # has_open_scan = (HardwareSource.HardwareSourceManager().get_hardware_source_for_hardware_source_id(
-        #     "open_scan_device") is not None)
-        # if has_open_scan:
-        #     controller = HardwareSource.HardwareSourceManager().get_instrument_by_id("orsay_controller")
-        #     assert controller.scan_controller.scan_device.scan_device_id == "open_scan_device"
-        #     return controller
+        # #TODO: In chromaTEM, this will overwrite superscan
+        has_open_scan = (HardwareSource.HardwareSourceManager().get_hardware_source_for_hardware_source_id(
+            "open_scan_device") is not None)
+        if has_open_scan:
+            controller = HardwareSource.HardwareSourceManager().get_instrument_by_id("orsay_controller")
+            assert controller.scan_controller.scan_device.scan_device_id == "open_scan_device"
+            return controller
         if self.__stem_controller is None:
             return Registry.get_component("stem_controller")
         else:
@@ -286,15 +286,14 @@ class TimePix3():
             "open_scan_device")
 
         if openscan is not None:
-            if has_superscan:
-                openscan.scan_device.scan_engine.mux_output_type1 = 4
-                openscan.scan_device.scan_engine.mux_output_pol1 = False
-            else:
-                openscan.scan_device.scan_engine.mux_output_type1 = 1
-                openscan.scan_device.scan_engine.mux_output_pol1 = False
-                openscan.scan_device.scan_engine.flyback_us = 0
-            #openscan.scan_device.scan_engine.mux_output_type1 = 3
-            #openscan.scan_device.scan_engine.mux_output_pol1 = True
+            #TODO this overwrites superscan. You may want to copy superscan however
+            # if has_superscan:
+            #     openscan.scan_device.scan_engine.mux_output_type1 = 5
+            #     openscan.scan_device.scan_engine.mux_output_pol1 = True
+            # else:
+            openscan.scan_device.scan_engine.mux_output_type1 = 3
+            openscan.scan_device.scan_engine.mux_output_pol1 = True
+            openscan.scan_device.scan_engine.flyback_us = 0
         else:
             logging.info("***TPX3***: Could not set the correct hyperspec output for openscan.")
 
@@ -1243,12 +1242,6 @@ class TimePix3():
         start = time.time()
         logging.info(f'***TPX3***: Number of frames to be acquired is {total_frames}.')
 
-        # If its a list scan, you should inform the value
-        # TODO: random scan does not work here because we change the list after starting the sequence below.
-        if scanInstrument.hardware_source_id == "open_scan_device":
-            array_to_send = scanInstrument.scan_device.scan_engine.get_ordered_array().astype('uint32')
-            inputs[0].sendall(array_to_send)
-
         try:
             scanInstrument.set_sequence_buffer_size(total_frames)
             scanInstrument.start_sequence_mode(scanInstrument.get_current_frame_parameters(), total_frames)
@@ -1256,6 +1249,12 @@ class TimePix3():
             logging.info(f"***TPX3***: Could not set the buffer size on the scan device.")
             self.stopTimepix3Measurement()
             return
+
+        # If its a list scan, you should inform the value
+        # TODO: random scan works here, but does not look the optimal emplacement.
+        if scanInstrument.hardware_source_id == "open_scan_device":
+            array_to_send = scanInstrument.scan_device.scan_engine.get_ordered_array().astype('uint32')
+            inputs[0].sendall(array_to_send)
 
         while True:
             try:
