@@ -418,6 +418,10 @@ class CameraHandler:
 
         #All the binding are done. You can set values here to force parameter initialization
         #For ex: self.exposure_model.value = 10.0
+        if self.camera_device.isTimepix:
+            self.tp3_time_resolved.value = False #Forced to NOT Time-resolved
+            self.port_item.value = 4 #Forced to frame-based
+
 
         update_all_setup_widgets()
         update_binning()
