@@ -137,6 +137,7 @@ class CameraHandler:
             self.tp3mode_items = list(['None'])
 
         self.tp3_bias_voltage = Model.PropertyModel(frame_parameters["bias_V"])
+        self.tp3_time_resolved = Model.PropertyModel(frame_parameters["time_resolved"])
         #def frame_parameter_changed(name, *args, **kwargs):
         #    if name == "acquisition_mode":
         #        md = self.camera_settings.get_current_frame_parameters()["acquisition_mode"]
@@ -382,6 +383,11 @@ class CameraHandler:
             frame_parameters["bias_V"] = value
             self.camera_settings.set_current_frame_parameters(frame_parameters)
 
+        def set_tp3_time_resolved(value):
+            frame_parameters = self.camera_settings.get_current_frame_parameters()
+            frame_parameters["time_resolved"] = value
+            self.camera_settings.set_current_frame_parameters(frame_parameters)
+
         self.roi_item.on_value_changed = set_roi
         self.port_item.on_value_changed = set_port
         self.speed_item.on_value_changed = set_speed
@@ -405,6 +411,7 @@ class CameraHandler:
             self.width_value.on_value_changed=set_tp3_width
             self.tp3mode_item.on_value_changed = set_tp3mode
             self.tp3_bias_voltage.on_value_changed = set_tp3_bias
+            self.tp3_time_resolved.on_value_changed=set_tp3_time_resolved
 
         self.mode_item.on_value_changed = set_mode
         self.synchro_item.on_value_changed = set_synchro
@@ -517,9 +524,10 @@ class CameraPanelFactory:
 
         buttons = ui.create_row(ui.create_stretch(), cancel_button, stop_button, start_button, spacing=8)
 
+        tp3_time_resolved = ui.create_check_box(text='TR', checked='@binding(tp3_time_resolved.value)')
         current_label = ui.create_label(text='Current (pA): ')
         current_val = ui.create_label(text="@binding(current_value.value)")
-        current_column = ui.create_row(current_label, current_val, ui.create_stretch())
+        current_column = ui.create_row(current_label, current_val, ui.create_stretch(), tp3_time_resolved)
 
         delay_label = ui.create_label(text='Time Delay: ')
         delay_value = ui.create_line_edit(name='delay_label_value', text="@binding(delay_value.value, converter=time_converter)")

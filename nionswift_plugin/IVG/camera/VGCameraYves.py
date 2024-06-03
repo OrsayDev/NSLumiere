@@ -291,6 +291,7 @@ class CameraDevice(camera_base.CameraDevice):
             "chips_config": 15,
             "gaps_mode": 0,
             "bias_V": 140,
+            "time_resolved": False,
         })
 
         self.current_camera_settings = CameraFrameParameters(d)
@@ -444,6 +445,11 @@ class CameraDevice(camera_base.CameraDevice):
             if self.__hardware_settings['bias_V'] != dict_frame_parameters['bias_V']:
                 self.__hardware_settings['bias_V'] = dict_frame_parameters['bias_V']
                 self.camera.setTp3BiasVoltage(dict_frame_parameters['bias_V'])
+
+        if self.isTimepix and "time_resolved" in dict_frame_parameters:
+            if self.__hardware_settings['time_resolved'] != dict_frame_parameters['time_resolved']:
+                self.__hardware_settings['time_resolved'] = dict_frame_parameters['time_resolved']
+                self.camera.setTp3TR(dict_frame_parameters['time_resolved'])
 
         #Medipix3 camera values
         if self.isMedipix and "chips_config" in dict_frame_parameters:

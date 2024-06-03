@@ -24,6 +24,7 @@ NUMBER_OF_MASKS = set_file.settings["Timepix3"]["NUMBER_OF_MASKS"]
 
 #Modes that we receive a frame
 FRAME = 0
+FRAME_TR = 1
 FASTCHRONO = 6
 COINC_CHRONO = 7
 FRAME_4DMASKED = 3
@@ -103,7 +104,7 @@ class Timepix3Configurations:
             return self.xspim_size, PIXELS_X
         elif self.mode == COINC_CHRONO:
             return self.time_width * 2, PIXELS_X
-        elif self.mode == FRAME or self.mode == FRAME_BASED or self.mode == ISIBOX_SAVEALL:
+        elif self.mode == FRAME or self.mode == FRAME_TR or self.mode == FRAME_BASED or self.mode == ISIBOX_SAVEALL:
             if self.bin:
                 return PIXELS_X
             else:
@@ -147,7 +148,7 @@ class Timepix3DataManager:
                 self.data = numpy.zeros(array_size, dtype=numpy.uint8)
         elif config.mode == EVENT_4DRAW:
             self.data = numpy.zeros(array_size, dtype=numpy.uint8)
-        elif config.mode == FRAME or config.mode == FRAME_BASED \
+        elif config.mode == FRAME or config.mode == FRAME_TR or config.mode == FRAME_BASED \
                 or config.mode == FRAME_4DMASKED or config.mode == FASTCHRONO \
                 or config.mode == COINC_CHRONO or config.mode == HYPERSPEC_FRAME_BASED or config.mode == ISIBOX_SAVEALL:
             self.data = numpy.zeros(array_size, dtype=data_depth)
@@ -585,7 +586,7 @@ class TimePix3():
 
         #Setting the configurations
         self.__detector_config.bin = True if displaymode == '1d' else False
-        self.__detector_config.mode = 10 if self.__frame_based else 0
+        self.__detector_config.mode = 10 if self.__frame_based else int(self.__detector_config.time_resolved==True)
         self.__detector_config.cumul = bool(accumulate)
         if self.__port == 3:
             self.__detector_config.mode = 8
@@ -960,6 +961,11 @@ class TimePix3():
         else:
             logging.info("***TPX3***: Bias voltage must be below 200.0 V.")
 
+    def setTp3TR(self, value: bool):
+        """
+        Set if the measurement is TR or not
+        """
+        self.__detector_config.time_resolved = value
 
     def getTp3Modes(self):
         return ['Standard', 'Coincidence', 'Raw 4D Image']
