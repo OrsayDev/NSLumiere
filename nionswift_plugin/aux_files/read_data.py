@@ -7,9 +7,9 @@ def InstrumentDictSetter(type, name, value):
         try:
             main_controller.SetValDetailed(type, name, value)
         except AttributeError:
-            pass
-            #main_controller.SetVal(name, value)
-
+            it_exists, _ = main_controller.TryGetVal(name)
+            if it_exists:
+                main_controller.SetVal(name, value)
 
 class FileManager:
     def __init__(self, filename):
