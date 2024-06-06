@@ -75,6 +75,7 @@ class Timepix3Configurations:
         self.threshold = 0
         self.bias_voltage = 0
         self.destination_port = 0
+        self.acquisition_us = 1000 #1 ms
         self.sup0 = 0.0
         self.sup1 = 0.0
 
@@ -401,6 +402,7 @@ class TimePix3():
         return detectorConfig
 
     def set_exposure_time(self, exposure_time):
+        self.__detector_config.acquisition_us = int(exposure_time * 1e6)
         detector_config = self.get_config()
         if self.__frame_based: #This is frame-based mode
             value = min(exposure_time, 0.250) #Maximum value is 250 ms
