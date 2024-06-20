@@ -104,7 +104,7 @@ class Timepix3Configurations:
         if self.mode == FASTCHRONO:
             return self.xspim_size, PIXELS_X
         elif self.mode == COINC_CHRONO:
-            return self.time_width * 2, PIXELS_X
+            return self.time_width * 4, PIXELS_X
         elif self.mode == FRAME or self.mode == FRAME_TR or self.mode == FRAME_BASED or self.mode == ISIBOX_SAVEALL:
             if self.bin:
                 return PIXELS_X
