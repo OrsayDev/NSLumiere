@@ -1099,7 +1099,7 @@ class Device(scan_base.ScanDevice):
 
         if DEBUG:
             print(
-                f"{current_frame.complete} and {self.scan_engine.device.get_pixel_counter()} and {self.__frame_number} and {self.__start_frame} "
+                f"{current_frame.complete} and {sub_area} and {self.scan_engine.device.get_pixel_counter()} and {self.__frame_number} and {self.__start_frame} "
                 f"and {self.scan_engine.device.get_dma_status_idle()} and {self.scan_engine.device.get_bd_status_cmplt()} "
                 f"and {self.get_current_image_size(current_frame.frame_parameters)}")
 
