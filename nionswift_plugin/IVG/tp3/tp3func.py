@@ -112,12 +112,14 @@ class Timepix3Configurations:
                 return PIXELS_Y, PIXELS_X
         elif self.mode == FRAME_4DMASKED:
             return self.yspim_size, self.xspim_size, NUMBER_OF_MASKS
-        elif self.mode == EVENT_HYPERSPEC or self.mode == EVENT_HYPERSPEC_COINC or self.mode == EVENT_LIST_SCAN:
+        elif self.mode == EVENT_HYPERSPEC or self.mode == EVENT_LIST_SCAN:
             return self.yspim_size, self.xspim_size, PIXELS_X
         elif self.mode == HYPERSPEC_FRAME_BASED: #Frame based measurement
             return self.yscan_size, self.xscan_size, PIXELS_X
         elif self.mode == EVENT_4DRAW:
             return self.yspim_size, self.xspim_size, PIXELS_Y, PIXELS_X
+        elif self.mode == EVENT_HYPERSPEC_COINC:
+            return self.yspim_size, self.xspim_size, self.time_width * 2, PIXELS_X
         else:
             raise TypeError(f"***TP3_CONFIG***: Attempted mode ({self.mode}) that is not configured in spimimage.")
 
@@ -588,7 +590,7 @@ class TimePix3():
 
         #Setting the configurations
         self.__detector_config.bin = True if displaymode == '1d' else False
-        self.__detector_config.mode = 10 if self.__frame_based else int(self.__detector_config.time_resolved==True)
+        self.__detector_config.mode = 10 if self.__frame_based else 0
         self.__detector_config.cumul = bool(accumulate)
         if self.__port == 3:
             self.__detector_config.mode = 8
@@ -715,7 +717,7 @@ class TimePix3():
         self.__detector_config.cumul = False
         if self.__port == 3:
             self.__detector_config.mode = 8
-        self.__detector_config.bytedepth = 8 if self.__subMode == 2 else 4
+        self.__detector_config.bytedepth = 8 if (self.__subMode == 1 or self.__subMode == 2) else 4
         self.__detector_config.xspim_size, self.__detector_config.yspim_size = self.get_scan_size(frame_parameters)
         self.__detector_config.xspim_size = self.__detector_config.xspim_size // self.__binning[0]
         self.__detector_config.yspim_size = self.__detector_config.yspim_size // self.__binning[0]
