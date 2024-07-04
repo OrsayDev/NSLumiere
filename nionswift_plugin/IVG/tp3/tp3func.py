@@ -78,6 +78,8 @@ class Timepix3Configurations:
         self.acquisition_us = 1000 #1 ms
         self.sup0 = 0.0
         self.sup1 = 0.0
+        self.__custom_meas = False
+        self.__custom_shape = None
 
     def __setattr__(self, key, value):
         try:
@@ -86,6 +88,11 @@ class Timepix3Configurations:
         except AttributeError:
             pass
         super(Timepix3Configurations, self).__setattr__(key, value)
+
+    def set_custom_measurement(self, custom: bool, shape: tuple):
+        self.__custom_meas = custom
+        if custom:
+            self.__custom_shape = shape
 
     def create_configuration_bytes(self):
         return json.dumps(self.settings).encode()
@@ -101,6 +108,8 @@ class Timepix3Configurations:
         return array_size
 
     def get_array_shape(self):
+        if self.__custom_meas:
+            return self.__custom_shape
         if self.mode == FASTCHRONO:
             return self.xspim_size, PIXELS_X
         elif self.mode == COINC_CHRONO:
@@ -439,7 +448,7 @@ class TimePix3():
         detector_config["Fan2PWM"] = 100 #100V
         detector_config["TriggerPeriod"] = 1.0  # 1s
         detector_config["ExposureTime"] = 1.0  # 1s
-        detector_config["Tdc"] = ['PN0', 'P0']
+        detector_config["Tdc"] = ['PN0', 'PN0']
 
         resp = self.request_put(url=self.__serverURL + '/detector/config', data=json.dumps(detector_config))
         data = resp.text
@@ -1090,6 +1099,12 @@ class TimePix3():
             self.stopTimepix3Measurement()
             return False
 
+        laser = Registry.get_component("sgain_controller")
+        if laser is not None:
+            laser_on = laser.cur_wav_f != "None" and laser.run_status_f == "True"
+            xspim = self.__detector_config.xspim_size
+            yspim = self.__detector_config.yspim_size
+            self.__detector_config.set_custom_measurement(laser_on, (yspim, xspim, laser.pts_f, PIXELS_X))
         self.__dt = self.__detector_config.get_data_receive_type()
         self.__data = self.__data_manager.get_data(self.__detector_config)
         client.send(config_bytes)
@@ -1281,13 +1296,19 @@ class TimePix3():
                     if q:
                         packet_data += s.recv(8 - q)
 
-                    try:
-                        event_list = numpy.frombuffer(packet_data, dtype=self.__dt)
+                    event_list = numpy.frombuffer(packet_data, dtype=self.__dt)
+
+                    laser = Registry.get_component("sgain_controller")
+                    laser_on = False
+                    if laser is not None:
+                        laser_on = laser.cur_wav_f != "None" and laser.run_status_f == "True"
+
+                    if laser_on:
+                        x_data = event_list % PIXELS_X
+                        pos_data = numpy.floor_divide(event_list, PIXELS_X)
+                        update_spim_numba(self.__data, pos_data * PIXELS_X * laser.pts_f + (laser.cur_point_lazy_f-1) * PIXELS_X + x_data)
+                    else:
                         update_spim_numba(self.__data, event_list)
-                    except ValueError:
-                        logging.info(f'***TP3***: Value error.')
-                    except IndexError:
-                        logging.info(f'***TP3***: Indexing error.')
 
             except ConnectionResetError:
                 logging.info("***TP3***: Socket reseted. Closing connection.")
