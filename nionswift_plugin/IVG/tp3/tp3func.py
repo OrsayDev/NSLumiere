@@ -631,7 +631,8 @@ class TimePix3():
         Message=1 because it is the normal data_locker.
         """
         self.__isReady.clear()  # Clearing the Event so synchronization can occur properly later on
-        self.set_spec_output(exposure),
+        self.set_exposure_time(exposure)
+        self.set_spec_output(exposure)
 
         # Setting the configurations
         self.__detector_config.bin = True if displaymode == '1d' else False
