@@ -25,7 +25,8 @@ NUMBER_OF_MASKS = set_file.settings["Timepix3"]["NUMBER_OF_MASKS"]
 #Modes that we receive a frame
 FRAME = 0
 FRAME_TR = 1
-FASTCHRONO = 6
+CHRONO = 6
+CHRONO_FRAME = 8
 COINC_CHRONO = 7
 FRAME_4DMASKED = 3
 #Modes that we receive an event list
@@ -37,7 +38,6 @@ EVENT_LIST_SCAN = 14
 FRAME_BASED = 10
 HYPERSPEC_FRAME_BASED = 11
 #Modes involving Isibox
-ISIBOX_SAVEALL = 8
 
 #TCP properties
 PORT = 8088
@@ -110,7 +110,7 @@ class Timepix3Configurations:
     def get_array_shape(self):
         if self.__custom_meas:
             return self.__custom_shape
-        if self.mode == FASTCHRONO:
+        if self.mode == CHRONO or self.mode == CHRONO_FRAME:
             return self.xspim_size, PIXELS_X
         elif self.mode == COINC_CHRONO:
             return self.time_width * 4, PIXELS_X
@@ -161,8 +161,8 @@ class Timepix3DataManager:
         elif config.mode == EVENT_4DRAW:
             self.data = numpy.zeros(array_size, dtype=numpy.uint8)
         elif config.mode == FRAME or config.mode == FRAME_TR or config.mode == FRAME_BASED \
-                or config.mode == FRAME_4DMASKED or config.mode == FASTCHRONO \
-                or config.mode == COINC_CHRONO or config.mode == HYPERSPEC_FRAME_BASED or config.mode == ISIBOX_SAVEALL:
+                or config.mode == FRAME_4DMASKED or config.mode == CHRONO \
+                or config.mode == CHRONO_FRAME or config.mode == COINC_CHRONO or config.mode == HYPERSPEC_FRAME_BASED or config.mode == ISIBOX_SAVEALL:
             self.data = numpy.zeros(array_size, dtype=data_depth)
         else:
             raise TypeError("***TP3_CONFIG***: Attempted mode ({self.mode}) that is not configured in get_data.")
@@ -636,7 +636,10 @@ class TimePix3():
 
         # Setting the configurations
         self.__detector_config.bin = True if displaymode == '1d' else False
-        self.__detector_config.mode = 6 if mode == 0 else 7
+        if mode == 0: #Chrono
+            self.__detector_config.mode = 8 if self.__frame_based else 6
+        elif mode == 1:
+            self.__detector_config.mode = 7
         self.__detector_config.cumul = False if mode == 0 else True
         if self.__port == 3:
             self.__detector_config.mode = 8
