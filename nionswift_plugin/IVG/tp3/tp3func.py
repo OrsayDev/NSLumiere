@@ -78,8 +78,8 @@ class Timepix3Configurations:
         self.acquisition_us = 1000 #1 ms
         self.sup0 = 0.0
         self.sup1 = 0.0
-        self.__custom_meas = False
-        self.__custom_shape = None
+        #self.__custom_meas = False
+        #self.__custom_shape = None
 
     def __setattr__(self, key, value):
         try:
@@ -89,10 +89,10 @@ class Timepix3Configurations:
             pass
         super(Timepix3Configurations, self).__setattr__(key, value)
 
-    def set_custom_measurement(self, custom: bool, shape: tuple):
-        self.__custom_meas = custom
-        if custom:
-            self.__custom_shape = shape
+    # def set_custom_measurement(self, custom: bool, shape: tuple):
+    #     self.__custom_meas = custom
+    #     if custom:
+    #         self.__custom_shape = shape
 
     def create_configuration_bytes(self):
         return json.dumps(self.settings).encode()
@@ -108,8 +108,8 @@ class Timepix3Configurations:
         return array_size
 
     def get_array_shape(self):
-        if self.__custom_meas:
-            return self.__custom_shape
+        #if self.__custom_meas:
+        #    return self.__custom_shape
         if self.mode == CHRONO or self.mode == CHRONO_FRAME:
             return self.xspim_size, PIXELS_X
         elif self.mode == COINC_CHRONO:
@@ -1108,7 +1108,7 @@ class TimePix3():
             laser_on = laser.cur_wav_f != "None" and laser.run_status_f == "True"
             xspim = self.__detector_config.xspim_size
             yspim = self.__detector_config.yspim_size
-            self.__detector_config.set_custom_measurement(laser_on, (yspim, xspim, laser.pts_f, PIXELS_X))
+            #self.__detector_config.set_custom_measurement(laser_on, (yspim, xspim, laser.pts_f, PIXELS_X))
         self.__dt = self.__detector_config.get_data_receive_type()
         self.__data = self.__data_manager.get_data(self.__detector_config)
         client.send(config_bytes)
