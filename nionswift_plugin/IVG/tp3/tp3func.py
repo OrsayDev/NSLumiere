@@ -114,7 +114,7 @@ class Timepix3Configurations:
             return self.xspim_size, PIXELS_X
         elif self.mode == COINC_CHRONO:
             return self.time_width * 4, PIXELS_X
-        elif self.mode == FRAME or self.mode == FRAME_TR or self.mode == FRAME_BASED or self.mode == ISIBOX_SAVEALL:
+        elif self.mode == FRAME or self.mode == FRAME_TR or self.mode == FRAME_BASED:
             if self.bin:
                 return PIXELS_X
             else:
@@ -162,7 +162,7 @@ class Timepix3DataManager:
             self.data = numpy.zeros(array_size, dtype=numpy.uint8)
         elif config.mode == FRAME or config.mode == FRAME_TR or config.mode == FRAME_BASED \
                 or config.mode == FRAME_4DMASKED or config.mode == CHRONO \
-                or config.mode == CHRONO_FRAME or config.mode == COINC_CHRONO or config.mode == HYPERSPEC_FRAME_BASED or config.mode == ISIBOX_SAVEALL:
+                or config.mode == CHRONO_FRAME or config.mode == COINC_CHRONO or config.mode == HYPERSPEC_FRAME_BASED:
             self.data = numpy.zeros(array_size, dtype=data_depth)
         else:
             raise TypeError("***TP3_CONFIG***: Attempted mode ({self.mode}) that is not configured in get_data.")
