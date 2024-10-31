@@ -1304,15 +1304,15 @@ class TimePix3():
 
                     laser = Registry.get_component("sgain_controller")
                     laser_on = False
-                    if laser is not None:
-                        laser_on = laser.cur_wav_f != "None" and laser.run_status_f == "True"
+                    #if laser is not None:
+                    #    laser_on = laser.cur_wav_f != "None" and laser.run_status_f == "True"
 
-                    if laser_on:
-                        x_data = event_list % PIXELS_X
-                        pos_data = numpy.floor_divide(event_list, PIXELS_X)
-                        update_spim_numba(self.__data, pos_data * PIXELS_X * laser.pts_f + (laser.cur_point_lazy_f-1) * PIXELS_X + x_data)
-                    else:
-                        update_spim_numba(self.__data, event_list)
+                    #if laser_on:
+                    #    x_data = event_list % PIXELS_X
+                    #    pos_data = numpy.floor_divide(event_list, PIXELS_X)
+                    #    update_spim_numba(self.__data, pos_data * PIXELS_X * laser.pts_f + (laser.cur_point_lazy_f-1) * PIXELS_X + x_data)
+                    #else:
+                    update_spim_numba(self.__data, event_list)
 
             except ConnectionResetError:
                 logging.info("***TP3***: Socket reseted. Closing connection.")
